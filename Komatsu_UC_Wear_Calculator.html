@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="UC Wear Calc">
+<title>Komatsu UC Wear Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3347;
+  --text: #e8eaf0;
+  --text-dim: #8b90a5;
+  --accent: #f59e0b;
+  --accent-dim: #b37a0a;
+  --good: #22c55e;
+  --good-bg: rgba(34,197,94,0.12);
+  --fair: #eab308;
+  --fair-bg: rgba(234,179,8,0.12);
+  --monitor: #f97316;
+  --monitor-bg: rgba(249,115,22,0.12);
+  --critical: #ef4444;
+  --critical-bg: rgba(239,68,68,0.12);
+  --input-bg: #2a2e3d;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 85%, transparent 100%);
+  padding: 16px 16px 24px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.logo {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; font-size: 14px; color: var(--bg);
+  flex-shrink: 0;
+}
+
+.title-text h1 {
+  font-size: 18px; font-weight: 700; line-height: 1.1;
+  color: var(--text);
+}
+.title-text .subtitle {
+  font-size: 11px; color: var(--text-dim); font-weight: 500;
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+
+.model-select-wrap {
+  position: relative;
+}
+
+.model-select {
+  width: 100%;
+  padding: 14px 44px 14px 16px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.model-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.select-arrow {
+  position: absolute;
+  right: 16px; top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.components {
+  padding: 0 16px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.comp-card.has-value { border-color: var(--border); }
+.comp-card.status-good { border-color: var(--good); box-shadow: 0 0 0 1px var(--good), inset 0 0 20px var(--good-bg); }
+.comp-card.status-fair { border-color: var(--fair); box-shadow: 0 0 0 1px var(--fair), inset 0 0 20px var(--fair-bg); }
+.comp-card.status-monitor { border-color: var(--monitor); box-shadow: 0 0 0 1px var(--monitor), inset 0 0 20px var(--monitor-bg); }
+.comp-card.status-critical { border-color: var(--critical); box-shadow: 0 0 0 1px var(--critical), inset 0 0 20px var(--critical-bg); }
+
+.comp-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.comp-specs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.comp-specs span { display: flex; flex-direction: column; gap: 1px; }
+.comp-specs .label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); opacity: 0.6; }
+.comp-specs .val { font-weight: 600; color: var(--text-dim); }
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.measure-input {
+  flex: 1;
+  padding: 12px 14px;
+  background: var(--input-bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.measure-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.4;
+  font-weight: 400;
+  font-size: 14px;
+}
+.measure-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.result-badge {
+  min-width: 90px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 16px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  transition: all 0.3s;
+  line-height: 1;
+}
+.result-badge .status-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 3px;
+  opacity: 0.8;
+}
+
+.result-badge.good { background: var(--good-bg); color: var(--good); }
+.result-badge.fair { background: var(--fair-bg); color: var(--fair); }
+.result-badge.monitor { background: var(--monitor-bg); color: var(--monitor); }
+.result-badge.critical { background: var(--critical-bg); color: var(--critical); }
+
+.clear-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 36px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 50px;
+  color: var(--text-dim);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.clear-btn:active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.legend {
+  padding: 16px;
+  margin: 0 16px 10px;
+  background: var(--surface);
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-around;
+  gap: 4px;
+}
+.legend-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.legend-dot.good { background: var(--good); }
+.legend-dot.fair { background: var(--fair); }
+.legend-dot.monitor { background: var(--monitor); }
+.legend-dot.critical { background: var(--critical); }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; line-height: 1.5; }
+
+.k-note {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.5;
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: auto;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title-row">
+    <div class="logo">UC</div>
+    <div class="title-text">
+      <h1>Komatsu UC Wear Calculator</h1>
+      <div class="subtitle">K-Factor Accelerated • Field Tool</div>
+    </div>
+  </div>
+  <div class="model-select-wrap">
+    <select class="model-select" id="modelSelect" onchange="loadModel()">
+      <option value="">— Select Model —</option>
+    </select>
+    <div class="select-arrow">▾</div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot good"></div>0–25%</div>
+  <div class="legend-item"><div class="legend-dot fair"></div>25–50%</div>
+  <div class="legend-item"><div class="legend-dot monitor"></div>50–75%</div>
+  <div class="legend-item"><div class="legend-dot critical"></div>75%+</div>
+</div>
+
+<div class="components" id="componentList">
+  <div class="empty-state">
+    <div class="icon">⛏️</div>
+    <p>Select a model above<br>to start measuring</p>
+  </div>
+</div>
+
+<button class="clear-btn" id="clearBtn" onclick="clearAll()" style="display:none;">Clear All Measurements</button>
+
+<script>
+const MODELS = {
+  // === EXCAVATORS ===
+  "PC78US-10": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:74,worn:70,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:41.3,worn:37.3,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:110,worn:103,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:110,worn:103,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:82,worn:72,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:22.5,worn:26.5,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:20,worn:12,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC88MR-10": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:74,worn:70,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:41.3,worn:37.3,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:110,worn:103,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:110,worn:103,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:82,worn:72,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:22.5,worn:26.5,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:20,worn:12,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC130-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:86,worn:81,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:46.3,worn:42.3,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:130,worn:120,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:130,worn:120,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:116,worn:106,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:25,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:50,worn:20.5,k:1.0,dir:"dec"},
+      {name:"Triple Grouser Shoe",nw:20,worn:10,k:1.0,dir:"dec"},
+      {name:"Swamp Shoe",nw:75,worn:63,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC138USLC-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:90,worn:85,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:50.6,worn:46.6,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:130,worn:120,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:130,worn:120,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:116,worn:106,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:25,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:50,worn:20.5,k:1.0,dir:"dec"},
+      {name:"Triple Grouser Shoe",nw:20,worn:10,k:1.0,dir:"dec"},
+      {name:"Swamp Shoe",nw:75,worn:63,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC170LC-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:105,worn:97,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:59.4,worn:54.4,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:120,worn:106,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:25,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:26,worn:16,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC210-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:105,worn:97,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:59.3,worn:54.3,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:120,worn:106,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:25,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:26,worn:16,k:1.0,dir:"dec"},
+      {name:"Swamp Shoe",nw:102.5,worn:90.5,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC220-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:105,worn:97,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:59.3,worn:54.3,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:120,worn:106,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:25,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:26,worn:16,k:1.0,dir:"dec"},
+      {name:"Swamp Shoe",nw:102.5,worn:90.5,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC228USLC-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:105,worn:97,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:59.3,worn:54.3,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:120,worn:106,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:25,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:26,worn:16,k:1.0,dir:"dec"},
+      {name:"Swamp Shoe",nw:102.5,worn:90.5,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC240LC-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:105,worn:97,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:59.3,worn:54.3,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:156,worn:144,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:120,worn:106,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:25,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:26,worn:16,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC290LC-10": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:116,worn:107,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:66.9,worn:61.9,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:180,worn:168,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:180,worn:168,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:148,worn:134,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:22.5,worn:28.5,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:30,worn:18,k:1.0,dir:"dec"},
+      {name:"Heavy Duty Shoe",nw:36,worn:24,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC360LC-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:116,worn:107,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:66.9,worn:61.9,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:180,worn:168,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:180,worn:168,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:152,worn:138,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:22,worn:28,k:1.3,dir:"inc"},
+      {name:"Triple Grouser Shoe",nw:36,worn:24,k:1.0,dir:"dec"},
+    ]
+  },
+  "PC490LC-11": {
+    type: "Excavator", components: [
+      {name:"Link Height",nw:133,worn:123,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:76,worn:71,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:210,worn:198,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:210,worn:198,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:167,worn:153,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:22,worn:28,k:1.3,dir:"inc"},
+      {name:"Semi-Double Grouser Shoe",nw:48,worn:27,k:1.0,dir:"dec"},
+      {name:"Triple Grouser Shoe",nw:37,worn:22,k:1.0,dir:"dec"},
+    ]
+  },
+  // === DOZERS ===
+  "D37EX-24 (STD)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:90,worn:82,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:54,worn:43.8,k:2.0,dir:"dec"},
+      {name:"Track Roller OD",nw:170,worn:152,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:170,worn:152,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:142,worn:128,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:16,worn:24,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:47,worn:20,k:1.0,dir:"dec"},
+    ]
+  },
+  "D37EX-24 (PLUS)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:100,worn:88,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:54,worn:43,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:175,worn:150,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:175,worn:150,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:157,worn:125,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:16,worn:24,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:47,worn:20,k:1.0,dir:"dec"},
+    ]
+  },
+  "D39EX-24 (STD)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:98,worn:89,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:56,worn:47.5,k:2.0,dir:"dec"},
+      {name:"Track Roller OD",nw:175,worn:150,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:175,worn:150,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:150,worn:126,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:28,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:47,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D39EX-24 (PLUS)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:108.5,worn:96.5,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:56,worn:45,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:175,worn:150,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:175,worn:150,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:167,worn:135,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:28,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:47,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D51PXi-24 (STD)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:106,worn:95,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:63,worn:52.8,k:2.0,dir:"dec"},
+      {name:"Track Roller OD",nw:185,worn:160,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:185,worn:160,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:150,worn:126,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:18,worn:27,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:55,worn:25,k:1.0,dir:"dec"},
+      {name:"Swamp Shoe",nw:83,worn:70,k:1.0,dir:"dec"},
+    ]
+  },
+  "D51PXi-24 (PLUS)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:111,worn:97,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:63,worn:54,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:185,worn:160,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:185,worn:160,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:167,worn:135,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:18,worn:27,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:55,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D61PXi-23 (STD)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:119,worn:108,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:65,worn:54.8,k:2.0,dir:"dec"},
+      {name:"Track Roller OD",nw:200,worn:164,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:200,worn:164,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:165,worn:143,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:29,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:57.5,worn:25,k:1.0,dir:"dec"},
+      {name:"Swamp Shoe",nw:91,worn:76,k:1.0,dir:"dec"},
+    ]
+  },
+  "D61PXi-23 (PLUS)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:124,worn:108,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:65,worn:56,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:200,worn:164,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:200,worn:164,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:180,worn:140,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:19,worn:29,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:57.5,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D65PXi-18 (STD)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:132,worn:119.5,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:73,worn:62.8,k:2.0,dir:"dec"},
+      {name:"Track Roller OD",nw:210,worn:174,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:210,worn:174,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:185,worn:163,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:20,worn:30,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:65,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D65PXi-18 (PLUS)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:137,worn:119,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:73,worn:64,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:210,worn:174,k:1.3,dir:"dec"},
+      {name:"Double Flange TR OD",nw:210,worn:174,k:1.3,dir:"dec"},
+      {name:"Carrier Roller OD",nw:200,worn:160,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:20,worn:30,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:65,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D71PX-24 (PLUS)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:137,worn:119,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:73,worn:64,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:210,worn:174,k:1.0,dir:"dec"},
+      {name:"Double Flange TR OD",nw:210,worn:174,k:1.0,dir:"dec"},
+      {name:"Carrier Roller OD",nw:200,worn:160,k:1.0,dir:"dec"},
+      {name:"Idler Wear Gap",nw:20,worn:30,k:1.0,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:65,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D85EX-18 (STD)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:140,worn:127.5,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:79.5,worn:69.3,k:2.0,dir:"dec"},
+      {name:"Track Roller OD",nw:222,worn:182,k:1.0,dir:"dec"},
+      {name:"Double Flange TR OD",nw:222,worn:182,k:1.0,dir:"dec"},
+      {name:"Carrier Roller OD",nw:185,worn:162,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:18,worn:30.5,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:71.5,worn:25,k:1.0,dir:"dec"},
+      {name:"Heavy Duty Shoe",nw:71.5,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D85EX-18 (PLUS)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:149,worn:129,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:79.5,worn:70.5,k:1.3,dir:"dec"},
+      {name:"Track Roller OD",nw:222,worn:182,k:1.0,dir:"dec"},
+      {name:"Double Flange TR OD",nw:222,worn:182,k:1.0,dir:"dec"},
+      {name:"Carrier Roller OD",nw:200,worn:160,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:18,worn:30.5,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:71.5,worn:25,k:1.0,dir:"dec"},
+      {name:"Heavy Duty Shoe",nw:71.5,worn:25,k:1.0,dir:"dec"},
+    ]
+  },
+  "D375AI-8E0 (DUAL)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:181,worn:153,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:108,worn:100,k:1.0,dir:"dec"},
+      {name:"Track Roller OD",nw:270,worn:200,k:1.0,dir:"dec"},
+      {name:"Double Flange TR OD",nw:270,worn:210,k:1.0,dir:"dec"},
+      {name:"Carrier Roller OD",nw:210,worn:185,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:23.5,worn:36,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:93,worn:30,k:1.0,dir:"dec"},
+      {name:"Heavy Duty Shoe",nw:93,worn:30,k:1.0,dir:"dec"},
+    ]
+  },
+  "D475A-5 (STD)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:199,worn:181,k:1.3,dir:"dec"},
+      {name:"Bushing OD",nw:116,worn:107.5,k:1.0,dir:"dec"},
+      {name:"Track Roller OD",nw:300,worn:230,k:1.0,dir:"dec"},
+      {name:"Large Diameter TR OD",nw:315,worn:240,k:1.0,dir:"dec"},
+      {name:"Double Flange TR OD",nw:300,worn:246,k:1.0,dir:"dec"},
+      {name:"Carrier Roller OD",nw:240,worn:215,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:26.5,worn:42,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:105,worn:35,k:1.0,dir:"dec"},
+      {name:"Heavy Duty Shoe",nw:105,worn:35,k:1.0,dir:"dec"},
+    ]
+  },
+  "D475A-5 (DUAL)": {
+    type: "Dozer", components: [
+      {name:"Link Height",nw:199,worn:171,k:1.0,dir:"dec"},
+      {name:"Bushing OD",nw:126,worn:118,k:1.0,dir:"dec"},
+      {name:"Track Roller OD",nw:300,worn:230,k:1.0,dir:"dec"},
+      {name:"Large Diameter TR OD",nw:315,worn:240,k:1.0,dir:"dec"},
+      {name:"Double Flange TR OD",nw:300,worn:246,k:1.0,dir:"dec"},
+      {name:"Carrier Roller OD",nw:240,worn:215,k:1.3,dir:"dec"},
+      {name:"Idler Wear Gap",nw:26.5,worn:42,k:1.3,dir:"inc"},
+      {name:"Single Grouser Shoe",nw:105,worn:35,k:1.0,dir:"dec"},
+      {name:"Heavy Duty Shoe",nw:105,worn:35,k:1.0,dir:"dec"},
+    ]
+  },
+};
+
+// Populate dropdown
+const select = document.getElementById('modelSelect');
+const excavators = Object.keys(MODELS).filter(k => MODELS[k].type === 'Excavator').sort();
+const dozers = Object.keys(MODELS).filter(k => MODELS[k].type === 'Dozer').sort();
+
+const exGroup = document.createElement('optgroup');
+exGroup.label = '── Excavators ──';
+excavators.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; exGroup.appendChild(o); });
+select.appendChild(exGroup);
+
+const dzGroup = document.createElement('optgroup');
+dzGroup.label = '── Dozers ──';
+dozers.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; dzGroup.appendChild(o); });
+select.appendChild(dzGroup);
+
+function loadModel() {
+  const model = select.value;
+  const list = document.getElementById('componentList');
+  const clearBtn = document.getElementById('clearBtn');
+
+  if (!model) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">⛏️</div><p>Select a model above<br>to start measuring</p></div>';
+    clearBtn.style.display = 'none';
+    return;
+  }
+
+  const data = MODELS[model];
+  clearBtn.style.display = 'block';
+
+  list.innerHTML = data.components.map((c, i) => `
+    <div class="comp-card" id="card-${i}">
+      <div class="comp-name">${c.name}${c.k !== 1.3 ? '<span class="k-note">K=' + c.k + '</span>' : ''}</div>
+      <div class="comp-specs">
+        <span><span class="label">New</span><span class="val">${c.nw} mm</span></span>
+        <span><span class="label">100% Worn</span><span class="val">${c.worn} mm</span></span>
+        <span><span class="label">Allowance</span><span class="val">${Math.abs(c.worn - c.nw).toFixed(1)} mm</span></span>
+      </div>
+      <div class="input-row">
+        <input type="number" inputmode="decimal" step="0.1"
+          class="measure-input" id="input-${i}"
+          placeholder="Enter mm"
+          oninput="calc(${i})">
+        <div class="result-badge" id="badge-${i}">—<div class="status-label">&nbsp;</div></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function calc(idx) {
+  const model = select.value;
+  if (!model) return;
+  const c = MODELS[model].components[idx];
+  const input = document.getElementById('input-' + idx);
+  const badge = document.getElementById('badge-' + idx);
+  const card = document.getElementById('card-' + idx);
+  const val = parseFloat(input.value);
+
+  card.className = 'comp-card';
+
+  if (isNaN(val) || input.value === '') {
+    badge.innerHTML = '—<div class="status-label">&nbsp;</div>';
+    badge.className = 'result-badge';
+    return;
+  }
+
+  let rawPct;
+  if (c.dir === 'dec') {
+    rawPct = ((c.nw - val) / (c.nw - c.worn)) * 100;
+  } else {
+    rawPct = ((val - c.nw) / (c.worn - c.nw)) * 100;
+  }
+
+  let effPct;
+  if (rawPct <= 100) {
+    effPct = rawPct;
+  } else {
+    effPct = 100 + (rawPct - 100) * c.k;
+  }
+
+  let status, statusClass;
+  if (effPct < 0) { status = 'NEW'; statusClass = 'good'; }
+  else if (effPct < 25) { status = 'GOOD'; statusClass = 'good'; }
+  else if (effPct < 50) { status = 'FAIR'; statusClass = 'fair'; }
+  else if (effPct < 75) { status = 'MONITOR'; statusClass = 'monitor'; }
+  else { status = 'CRITICAL'; statusClass = 'critical'; }
+
+  badge.innerHTML = `${effPct.toFixed(1)}%<div class="status-label">${status}</div>`;
+  badge.className = 'result-badge ' + statusClass;
+  card.className = 'comp-card has-value status-' + statusClass;
+}
+
+function clearAll() {
+  const model = select.value;
+  if (!model) return;
+  MODELS[model].components.forEach((_, i) => {
+    const input = document.getElementById('input-' + i);
+    if (input) { input.value = ''; calc(i); }
+  });
+}
+</script>
+</body>
+</html>
